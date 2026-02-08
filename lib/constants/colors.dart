@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Couleurs primaires
-  static const Color primary = Color(0xFF1976D2);
-  static const Color primaryDark = Color(0xFF0D47A1);
+  static const Color primary = Color(0xFF2196F3); // Bleu plus clair et plus vif
+  static const Color primaryDark = Color(0xFF1565C0); // Bleu foncé mais pas trop
   static const Color primaryLight = Color(0xFFE3F2FD);
 
   // Couleurs sémantiques

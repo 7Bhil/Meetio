@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/responsive_container.dart';
 import '../widgets/feature_card.dart';
 import '../widgets/platform_chip.dart';
+import '../widgets/logo_widget.dart';
 import '../constants/breakpoints.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
@@ -59,66 +60,98 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveContainer(
-      enableMaxWidth: true,
-      child: SizedBox(
-        height: 70, // Hauteur fixe pour le header
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Logo - aligné à gauche
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[200]!,
+            width: 1,
+          ),
+        ),
+      ),
+      child: ResponsiveContainer(
+        enableMaxWidth: false, // Désactiver la limite de largeur pour le header
+        child: SizedBox(
+          height: 70,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Logo moderne avec animation hover
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.event_available,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.calendar_today,
-                    color: AppColors.primary,
-                    size: 30,
+                  const SizedBox(width: Spacing.md),
+                  Text(
+                    'Meetio',
+                    style: AppTextStyles.headlineLarge.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(width: Spacing.md),
-                Text(
-                  'Meetio',
-                  style: AppTextStyles.headlineLarge.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
-            // Espace flexible pour pousser le bouton à droite
-            Expanded(child: Container()),
+              // Espace flexible pour pousser le bouton à droite
+              const Spacer(),
 
-            // Bouton Se connecter - bien à droite
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.xl,
-                  vertical: Spacing.md,
-                ),
-                shape: RoundedRectangleBorder(
+              // Bouton connexion moderne
+              Container(
+                margin: const EdgeInsets.only(right: 20), // Marge pour l'espace sur web
+                decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 1.5,
+                  ),
                 ),
-                elevation: 2,
-              ),
-              child: const Text(
-                'Se connecter',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AuthScreen()),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.xl,
+                      vertical: Spacing.md,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    'Se connecter',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -266,10 +299,11 @@ class _HeroSection extends StatelessWidget {
                 Container(
                   constraints: const BoxConstraints(maxWidth: 400),
                   child: ElevatedButton(
+                    // Dans landing_screen.dart
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => AuthScreen()),
+                        MaterialPageRoute(builder: (_) => const AuthScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -727,6 +761,9 @@ class _CTASection extends StatelessWidget {
       child: ResponsiveContainer(
         child: Column(
           children: [
+            // Logo centralisé avec le widget réutilisable
+            LogoWidget(type: LogoType.header),
+
             // Section Téléchargement
             Container(
               width: double.infinity,
@@ -1105,7 +1142,13 @@ class _Footer extends StatelessWidget {
                 Row(
                   children: [
                     TextButton(
-                      onPressed: () {},
+                    // Dans landing_screen.dart
+                    onPressed: () {
+      Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+      },
                       child: Text(
                         'Confidentialité',
                         style: AppTextStyles.bodySmall.copyWith(

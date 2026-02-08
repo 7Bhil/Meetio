@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/landing_screen.dart';
+import 'screens/auth_screen.dart';
+import 'screens/home_screen.dart';
+// IMPORTEZ les autres écrans quand vous les créerez
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Charge le fichier .env s'il existe (optionnel)
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (_) {
+    // ignore: avoid_print
+    print('.env non trouvé (continuer sans variables d\'environnement)');
+  }
+
   runApp(const MyApp());
 }
 
@@ -11,21 +24,18 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Meetio - Gestion de réunions',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1976D2),
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: const Color(0xFFFAFAFA),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-        ),
-      ),
-      home: const LandingScreen(),
+      title: 'Meetio',
+      theme: ThemeData(primarySwatch: Colors.blue),
+
+      // ✅ Configuration des routes
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LandingScreen(),
+        '/auth': (context) => const AuthScreen(),
+        '/home': (context) => const HomeScreen(),
+        // Ajoutez les autres AU FUR ET À MESURE que vous les créez
+      },
+
       debugShowCheckedModeBanner: false,
     );
   }
