@@ -1,0 +1,11 @@
+[build]
+  # Commande pour générer la version Web de Flutter
+  command = "flutter build web --release"
+  # Dossier contenant le résultat du build
+  publish = "build/web"
+
+# Redirection obligatoire pour Flutter Web (Single Page Application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
