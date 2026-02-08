@@ -21,6 +21,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
+  late TextEditingController _maxParticipantsController;
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
   int _duration = 60; // minutes
@@ -32,6 +33,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
     _titleController = TextEditingController(text: widget.meeting?.title ?? '');
     _descriptionController = TextEditingController(text: widget.meeting?.description ?? '');
     _locationController = TextEditingController(text: widget.meeting?.location ?? '');
+    _maxParticipantsController = TextEditingController(text: widget.meeting?.maxParticipants?.toString() ?? '');
     _selectedDate = widget.meeting?.date ?? DateTime.now();
     _selectedTime = widget.meeting != null 
         ? TimeOfDay.fromDateTime(widget.meeting!.date) 
@@ -44,6 +46,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _maxParticipantsController.dispose();
     super.dispose();
   }
 
@@ -98,6 +101,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
       description: _descriptionController.text.trim(),
       date: combinedDate,
       duration: _duration,
+      maxParticipants: int.tryParse(_maxParticipantsController.text.trim()),
       location: _locationController.text.trim(),
       organizerId: '', 
       status: widget.meeting?.status ?? 'à venir',
@@ -167,6 +171,8 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
                       _buildTextField(_descriptionController, 'Description', 'De quoi allons-nous parler ?', Icons.description_outlined, maxLines: 3),
                       const SizedBox(height: Spacing.lg),
                       _buildTextField(_locationController, 'Lieu ou Lien', 'ex: Salle de conférence ou Zoom', Icons.location_on_outlined),
+                      const SizedBox(height: Spacing.lg),
+                      _buildTextField(_maxParticipantsController, 'Nombre de places (optionnel)', 'ex: 10', Icons.people_outline_rounded, isNumeric: true, required: false),
                    ]),
                    
                    const SizedBox(height: Spacing.xl),
@@ -234,7 +240,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, String hint, IconData icon, {int maxLines = 1}) {
+  Widget _buildTextField(TextEditingController controller, String label, String hint, IconData icon, {int maxLines = 1, bool isNumeric = false, bool required = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -243,6 +249,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
+          keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
           style: AppTextStyles.bodyMedium,
           decoration: InputDecoration(
             hintText: hint,
@@ -252,7 +259,11 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
           ),
-          validator: (val) => val == null || val.isEmpty ? 'Ce champ est requis' : null,
+          validator: (val) {
+            if (required && (val == null || val.isEmpty)) return 'Ce champ est requis';
+            if (isNumeric && val != null && val.isNotEmpty && int.tryParse(val) == null) return 'Entrez un nombre valide';
+            return null;
+          },
         ),
       ],
     );
@@ -291,7 +302,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Durée estimados (minutes)', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+        Text('Durée estimée (minutes)', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
         const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,

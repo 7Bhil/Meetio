@@ -6,6 +6,8 @@ import '../models/user.dart';
 import '../services/meeting_service.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
+import '../models/notification.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../constants/spacing.dart';
@@ -19,8 +21,10 @@ class MeetingsListScreen extends StatefulWidget {
 
 class _MeetingsListScreenState extends State<MeetingsListScreen> {
   final MeetingService _meetingService = MeetingService();
+  final NotificationService _notificationService = NotificationService();
   late Future<List<Meeting>> _meetingsFuture;
   late Future<List<Meeting>> _discoverMeetingsFuture;
+  late Future<List<NotificationModel>> _notificationsFuture;
   User? _currentUser;
 
   @override
@@ -41,6 +45,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
     setState(() {
       _meetingsFuture = _meetingService.getMeetings();
       _discoverMeetingsFuture = _meetingService.getMeetings(discover: true);
+      _notificationsFuture = _notificationService.getNotifications();
     });
   }
 
@@ -77,6 +82,22 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             ],
           ),
           actions: [
+            FutureBuilder<List<NotificationModel>>(
+              future: _notificationsFuture,
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.hasData 
+                    ? snapshot.data!.where((n) => !n.isRead).length 
+                    : 0;
+                return IconButton(
+                  icon: Badge(
+                    label: unreadCount > 0 ? Text(unreadCount.toString()) : null,
+                    isLabelVisible: unreadCount > 0,
+                    child: const Icon(Icons.notifications_none_rounded),
+                  ),
+                  onPressed: () => Navigator.pushNamed(context, '/notifications').then((_) => _refreshMeetings()),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
               onPressed: _refreshMeetings,
@@ -285,14 +306,36 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
                 const Divider(),
                 const SizedBox(height: Spacing.sm),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    if (meeting.maxParticipants != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          '${meeting.participants?.length ?? 0}/${meeting.maxParticipants} places',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: ((meeting.participants?.length ?? 0) >= meeting.maxParticipants!) 
+                              ? AppColors.error 
+                              : AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     TextButton.icon(
-                      onPressed: () => _joinMeeting(meeting),
-                      icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-                      label: const Text('REJOINDRE'),
+                      onPressed: ((meeting.participants?.length ?? 0) >= (meeting.maxParticipants ?? 999)) 
+                        ? null 
+                        : () => _joinMeeting(meeting),
+                      icon: Icon(
+                        ((meeting.participants?.length ?? 0) >= (meeting.maxParticipants ?? 999))
+                          ? Icons.block_rounded
+                          : Icons.add_circle_outline_rounded, 
+                        size: 20
+                      ),
+                      label: Text(((meeting.participants?.length ?? 0) >= (meeting.maxParticipants ?? 999)) ? 'COMPLET' : 'REJOINDRE'),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
+                        foregroundColor: ((meeting.participants?.length ?? 0) >= (meeting.maxParticipants ?? 999))
+                          ? Colors.grey
+                          : AppColors.primary,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),

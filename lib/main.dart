@@ -7,6 +7,7 @@ import 'screens/home_screen.dart';
 import 'screens/meetings_list_screen.dart';
 import 'screens/create_meeting_screen.dart';
 import 'screens/meeting_detail_screen.dart';
+import 'screens/notifications_screen.dart';
 import 'screens/admin/user_management_screen.dart';
 
 void main() async {
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
         '/meetings': (context) => const MeetingsListScreen(),
         '/meetings/create': (context) => const CreateMeetingScreen(),
         '/meetings/detail': (context) => const MeetingDetailScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
         '/admin/users': (context) => const UserManagementScreen(),
       },
       debugShowCheckedModeBanner: false,

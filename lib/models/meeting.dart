@@ -8,6 +8,8 @@ class Meeting {
   final String location;
   final String organizerId;
   final int duration; // en minutes
+  final int? maxParticipants;
+  final List<dynamic>? participants;
   final String status; // 'à venir', 'en cours', 'terminée'
 
   Meeting({
@@ -16,6 +18,8 @@ class Meeting {
     required this.description,
     required this.date,
     required this.duration,
+    this.maxParticipants,
+    this.participants,
     required this.location,
     required this.organizerId,
     required this.status,
@@ -28,6 +32,8 @@ class Meeting {
       description: json['description'] ?? '',
       date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
       duration: json['duration'] ?? 60,
+      maxParticipants: json['max_participants'],
+      participants: json['participants'],
       location: json['location'] ?? '',
       organizerId: json['organizer_id']?.toString() ?? '',
       status: json['status'] ?? 'à venir',
@@ -39,6 +45,7 @@ class Meeting {
     'description': description,
     'date': date.toIso8601String(),
     'duration': duration,
+    'max_participants': maxParticipants,
     'location': location,
     'status': status,
   };

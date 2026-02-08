@@ -164,6 +164,14 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
           _buildDetailRow(Icons.timer_outlined, 'Durée', '${meeting.duration} minutes'),
           const Divider(height: 32),
           _buildDetailRow(Icons.location_on_rounded, 'Lieu', meeting.location),
+          if (meeting.maxParticipants != null) ...[
+            const Divider(height: 32),
+            _buildDetailRow(
+              Icons.people_outline_rounded, 
+              'Participation', 
+              '${meeting.participants?.length ?? 0} / ${meeting.maxParticipants} places occupées'
+            ),
+          ],
         ],
       ),
     );
@@ -213,18 +221,26 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
   }
 
   Widget _buildJoinButton(Meeting meeting) {
+    final isFull = meeting.maxParticipants != null && 
+                   (meeting.participants?.length ?? 0) >= meeting.maxParticipants!;
+    
+    // On pourrait aussi vérifier si l'utilisateur est déjà inscrit ici pour changer le texte
+    // mais le bouton n'apparaît normalement que pour les réunions non rejointes dans "Découvrir"
+    
     return Container(
       width: double.infinity,
       height: 60,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(colors: [AppColors.primary, AppColors.accent]),
+        gradient: isFull 
+          ? LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade500])
+          : const LinearGradient(colors: [AppColors.primary, AppColors.accent]),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+          if (!isFull) BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: ElevatedButton(
-        onPressed: _loading ? null : () => _joinMeeting(meeting.id),
+        onPressed: (_loading || isFull) ? null : () => _joinMeeting(meeting.id),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
@@ -232,7 +248,10 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
         ),
         child: _loading 
           ? const CircularProgressIndicator(color: Colors.white)
-          : Text('REJOINDRE LA RÉUNION', style: AppTextStyles.labelLarge.copyWith(color: Colors.white, fontSize: 16, letterSpacing: 1.1)),
+          : Text(
+              isFull ? 'RÉUNION COMPLÈTE' : 'REJOINDRE LA RÉUNION', 
+              style: AppTextStyles.labelLarge.copyWith(color: Colors.white, fontSize: 16, letterSpacing: 1.1)
+            ),
       ),
     );
   }
