@@ -94,4 +94,14 @@ class ApiService {
       headers: getHeaders(),
     );
   }
+
+  // --- User Management (Admin) ---
+  
+  static Future<http.Response> getUsers() async {
+    return await get('users');
+  }
+
+  static Future<http.Response> updateUserRole(int userId, String role) async {
+    return await put('users/$userId/role', {'role': role});
+  }
 }

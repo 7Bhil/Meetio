@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../services/auth_service.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
@@ -15,8 +16,10 @@ class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController =
+      TextEditingController(text: '7bhilal.chitou7@gmail.com');
+  final TextEditingController _passwordController =
+      TextEditingController(text: 'Bh7777777');
   final TextEditingController _passwordConfirmController =
       TextEditingController();
   bool _loading = false;
@@ -24,307 +27,163 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(Spacing.xl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Logo et retour
-                Row(
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // Background Gradient Orbs
+          Positioned(
+            top: -100,
+            right: -100,
+            child: _buildGradientOrb(Colors.indigo.withOpacity(0.2), 300),
+          ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: _buildGradientOrb(AppColors.accent.withOpacity(0.1), 250),
+          ),
+          
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.calendar_today,
-                      color: AppColors.primary,
-                      size: 32,
-                    ),
-                    const SizedBox(width: Spacing.sm),
-                    Text(
-                      'Meetio',
-                      style: AppTextStyles.headlineMedium.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const Spacer(),
-                    const SizedBox(width: 48),
+                    // Header Area
+                    _buildHeader(),
+                    const SizedBox(height: Spacing.xxl),
+                    
+                    // Glassmorphic Card
+                    _buildAuthCard(),
+                    
+                    const SizedBox(height: Spacing.xl),
+                    _buildFooterLink(),
                   ],
                 ),
+              ),
+            ),
+          ),
+          
+          // Back Button
+          Positioned(
+            top: 10,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              onPressed: () => Navigator.pop(context),
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                const SizedBox(height: Spacing.xxl),
+  Widget _buildGradientOrb(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withOpacity(0)],
+        ),
+      ),
+    );
+  }
 
-                // Titre
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(Spacing.md),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.calendar_month_rounded,
+            color: AppColors.primary,
+            size: 40,
+          ),
+        ),
+        const SizedBox(height: Spacing.lg),
+        Text(
+          'Meetio',
+          style: AppTextStyles.displayMedium.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: Spacing.xs),
+        Text(
+          isLogin ? 'Bon retour parmi nous !' : 'Commencez l\'aventure.',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAuthCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 450),
+          padding: const EdgeInsets.all(Spacing.xl),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.5)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  isLogin ? 'Connexion' : 'Créer un compte',
-                  style: AppTextStyles.headlineLarge.copyWith(
-                    color: AppColors.primaryDark,
-                  ),
+                  isLogin ? 'Connexion' : 'Inscription',
+                  style: AppTextStyles.headlineMedium,
                 ),
-
-                const SizedBox(height: Spacing.sm),
-
-                Text(
-                  isLogin
-                      ? 'Accédez à votre espace de réunions'
-                      : 'Rejoignez Meetio en quelques clics',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-
+                const SizedBox(height: Spacing.xl),
+                
+                if (!isLogin) ...[
+                  _buildLabel('Nom complet'),
+                  _buildTextField(_nameController, Icons.person_outline, 'John Doe'),
+                  const SizedBox(height: Spacing.lg),
+                ],
+                
+                _buildLabel('Adresse email'),
+                _buildTextField(_emailController, Icons.email_outlined, 'email@exemple.com', keyboardType: TextInputType.emailAddress),
+                const SizedBox(height: Spacing.lg),
+                
+                _buildLabel('Mot de passe'),
+                _buildTextField(_passwordController, Icons.lock_outline, '••••••••', obscure: true),
+                
+                if (!isLogin) ...[
+                  const SizedBox(height: Spacing.lg),
+                  _buildLabel('Confirmer le mot de passe'),
+                  _buildTextField(_passwordConfirmController, Icons.lock_reset_outlined, '••••••••', obscure: true),
+                ],
+                
                 const SizedBox(height: Spacing.xxl),
-
-                // Formulaire
-                Container(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        if (!isLogin)
-                          TextFormField(
-                            controller: _nameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Nom complet',
-                              prefixIcon: Icon(Icons.person),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Veuillez entrer votre nom';
-                              }
-                              return null;
-                            },
-                          ),
-                        if (!isLogin) const SizedBox(height: Spacing.lg),
-
-                        TextFormField(
-                          controller: _emailController,
-                          decoration: const InputDecoration(
-                            labelText: 'Adresse email',
-                            prefixIcon: Icon(Icons.email),
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer votre email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Email invalide';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: Spacing.lg),
-
-                        TextFormField(
-                          controller: _passwordController,
-                          decoration: const InputDecoration(
-                            labelText: 'Mot de passe',
-                            prefixIcon: Icon(Icons.lock),
-                          ),
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer votre mot de passe';
-                            }
-                            if (value.length < 6) {
-                              return 'Au moins 6 caractères';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        if (!isLogin) const SizedBox(height: Spacing.lg),
-                        if (!isLogin)
-                          TextFormField(
-                            controller: _passwordConfirmController,
-                            decoration: const InputDecoration(
-                              labelText: 'Confirmer le mot de passe',
-                              prefixIcon: Icon(Icons.lock_reset),
-                            ),
-                            obscureText: true,
-                            validator: (value) {
-                              if (!isLogin) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Veuillez confirmer le mot de passe';
-                                }
-                                if (value != _passwordController.text) {
-                                  return 'Les mots de passe ne correspondent pas';
-                                }
-                              }
-                              return null;
-                            },
-                          ),
-
-                        const SizedBox(height: Spacing.lg),
-
-                        // Bouton de soumission
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _loading
-                                ? null
-                                : () async {
-                                    if (!_formKey.currentState!.validate())
-                                      return;
-
-                                    setState(() => _loading = true);
-
-                                    try {
-                                      if (isLogin) {
-                                        final user = await AuthService().login(
-                                          email: _emailController.text.trim(),
-                                          password: _passwordController.text,
-                                        );
-                                        if (user != null) {
-                                          // Aller à /home
-                                          Navigator.pushReplacementNamed(
-                                            context,
-                                            '/home',
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Échec de la connexion',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      } else {
-                                        final user = await AuthService()
-                                            .register(
-                                              name: _nameController.text.trim(),
-                                              email: _emailController.text
-                                                  .trim(),
-                                              password:
-                                                  _passwordController.text,
-                                              passwordConfirmation:
-                                                  _passwordConfirmController
-                                                      .text,
-                                            );
-                                        if (user != null) {
-                                          Navigator.pushReplacementNamed(
-                                            context,
-                                            '/home',
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Échec de l\'inscription',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(content: Text('Erreur: $e')),
-                                      );
-                                    } finally {
-                                      if (mounted)
-                                        setState(() => _loading = false);
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: Spacing.lg,
-                              ),
-                              backgroundColor: AppColors.primary,
-                            ),
-                            child: _loading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    isLogin
-                                        ? 'Se connecter'
-                                        : 'Créer mon compte',
-                                    style: AppTextStyles.labelLarge.copyWith(
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                          ),
-                        ),
-
-                        const SizedBox(height: Spacing.lg),
-
-                        // Lien pour changer de mode
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              isLogin = !isLogin;
-                            });
-                          },
-                          child: Text(
-                            isLogin
-                                ? 'Pas de compte ? S\'inscrire'
-                                : 'Déjà un compte ? Se connecter',
-                            style: TextStyle(color: AppColors.primary),
-                          ),
-                        ),
-
-                        const SizedBox(height: Spacing.xl),
-
-                        // Séparateur
-                        Row(
-                          children: [
-                            Expanded(child: Divider(color: AppColors.border)),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: Spacing.md,
-                              ),
-                              child: Text(
-                                'Ou continuer avec',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                            Expanded(child: Divider(color: AppColors.border)),
-                          ],
-                        ),
-
-                        const SizedBox(height: Spacing.lg),
-
-                        // Boutons de connexion sociale - VERSION CORRIGÉE
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: _buildSocialButton(
-                                icon: Icons.g_mobiledata,
-                                label: 'Continuer avec Google',
-                                color: Color(0xFF4285F4),
-                                onPressed: () {},
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                _buildSubmitButton(),
               ],
             ),
           ),
@@ -333,35 +192,131 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildSocialButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return Column(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            onPressed: onPressed,
-            icon: Icon(icon, size: 24, color: color),
-            padding: const EdgeInsets.all(Spacing.md),
-          ),
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Spacing.xs, left: 4),
+      child: Text(
+        text,
+        style: AppTextStyles.labelLarge.copyWith(color: AppColors.textPrimary),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, IconData icon, String hint, {bool obscure = false, TextInputType? keyboardType}) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      style: AppTextStyles.bodyMedium,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
+        filled: true,
+        fillColor: Colors.grey.withOpacity(0.05),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
-        const SizedBox(height: Spacing.xs),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: color,
-            fontWeight: FontWeight.w500,
-          ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.transparent),
         ),
-      ],
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+        ),
+      ),
+      validator: (value) => value == null || value.isEmpty ? 'Champ requis' : null,
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.accent],
+        ),
+      ),
+      child: ElevatedButton(
+        onPressed: _loading ? null : _handleAuth,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: _loading
+            ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : Text(
+                isLogin ? 'Se connecter' : 'Créer un compte',
+                style: AppTextStyles.labelLarge.copyWith(color: Colors.white, fontSize: 16),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildFooterLink() {
+    return TextButton(
+      onPressed: () => setState(() => isLogin = !isLogin),
+      child: RichText(
+        text: TextSpan(
+          text: isLogin ? 'Pas encore de compte ? ' : 'Déjà un compte ? ',
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+          children: [
+            TextSpan(
+              text: isLogin ? 'Inscrivez-vous' : 'Connectez-vous',
+              style: AppTextStyles.labelLarge.copyWith(color: AppColors.primary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleAuth() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+
+    try {
+      final authService = AuthService();
+      final user = isLogin
+          ? await authService.login(email: _emailController.text.trim(), password: _passwordController.text)
+          : await authService.register(
+              name: _nameController.text.trim(),
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              passwordConfirmation: _passwordConfirmController.text,
+            );
+
+      if (user != null) {
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        _showError('Échec de la procédure. Vérifiez vos identifiants.');
+      }
+    } catch (e) {
+      _showError('Une erreur est survenue : $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 }

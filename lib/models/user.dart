@@ -29,25 +29,4 @@ class User {
   };
 }
 
-// lib/models/meeting.dart
-class Meeting {
-  final String id;
-  final String title;
-  final String description;
-  final DateTime date;
-  final String location;
-  final String organizerId;
-  final List<String> participants;
-  final String status; // 'à venir', 'en cours', 'terminée'
 
-  Meeting({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.date,
-    required this.location,
-    required this.organizerId,
-    this.participants = const [],
-    required this.status,
-  });
-}
