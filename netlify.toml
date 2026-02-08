@@ -1,6 +1,6 @@
 [build]
-  # Commande pour générer la version Web de Flutter
-  command = "flutter build web --release"
+  # Utilise un script personnalisé pour installer Flutter et builder le projet
+  command = "bash build.sh"
   # Dossier contenant le résultat du build
   publish = "build/web"
 
