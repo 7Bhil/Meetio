@@ -19,6 +19,13 @@ class ApiService {
       // dotenv non chargé
     }
 
+    // Fix pour le Web deployed (Netlify/Vercel) : localhost est impossible en Release externe
+    if (kIsWeb && kReleaseMode) {
+      if (url.contains('localhost') || url.contains('127.0.0.1')) {
+        url = 'https://meetio-back.onrender.com/api';
+      }
+    }
+
     // Fix pour l'émulateur Android (si on teste en local sur localhost/127.0.0.1)
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       if (url.contains('localhost')) {
