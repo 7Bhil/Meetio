@@ -18,6 +18,9 @@ flutter config --no-analytics
 # Télécharger les outils de build web
 flutter precache --web
 
+# Créer le fichier .env à la volée (pour Netlify)
+echo "API_BASE_URL=$API_BASE_URL" > .env
+
 # Builder le projet
 echo "🏗️ Début du build Flutter Web..."
 flutter build web --release
