@@ -26,11 +26,12 @@ class AuthService {
         await ApiService.saveToken(token);
 
         return User.fromJson(userData);
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Erreur lors de l\'inscription');
       }
-      return null;
     } catch (e) {
-      print('Erreur inscription: $e');
-      return null;
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
 
@@ -50,11 +51,12 @@ class AuthService {
         await ApiService.saveToken(token);
 
         return User.fromJson(userData);
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Erreur lors de la connexion');
       }
-      return null;
     } catch (e) {
-      print('Erreur connexion: $e');
-      return null;
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
 

@@ -296,13 +296,11 @@ class _AuthScreenState extends State<AuthScreen> {
               passwordConfirmation: _passwordConfirmController.text,
             );
 
-      if (user != null) {
-        if (mounted) Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        _showError('Échec de la procédure. Vérifiez vos identifiants.');
+      if (user != null && mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
-      _showError('Une erreur est survenue : $e');
+      _showError(e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
