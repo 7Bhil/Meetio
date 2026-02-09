@@ -30,7 +30,6 @@ class LogoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final double iconSize = size ?? _getDefaultSize();
     final Color iconColor = this.iconColor ?? _getDefaultIconColor();
-    final IconData iconData = _getIconData();
     final TextStyle textStyle = this.textStyle ?? _getDefaultTextStyle();
 
     if (type == LogoType.standalone) {
@@ -54,19 +53,11 @@ class LogoWidget extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(
-              iconData,
-              color: Colors.white,
-              size: iconSize,
-            ),
+            child: _buildLogoImage(iconSize, Colors.white),
           ),
           const SizedBox(width: 12),
         ] else ...[
-          Icon(
-            iconData,
-            color: iconColor,
-            size: iconSize,
-          ),
+          _buildLogoImage(iconSize, iconColor),
           const SizedBox(width: 8),
         ],
         if (showText)
@@ -75,6 +66,22 @@ class LogoWidget extends StatelessWidget {
             style: textStyle,
           ),
       ],
+    );
+  }
+
+  Widget _buildLogoImage(double size, Color fallbackColor) {
+    return Image.asset(
+      AppAssets.logoPath,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return Icon(
+          _getIconData(),
+          color: fallbackColor,
+          size: size,
+        );
+      },
     );
   }
 
@@ -92,11 +99,7 @@ class LogoWidget extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        AppAssets.logoIcon,
-        color: iconColor,
-        size: iconSize,
-      ),
+      child: _buildLogoImage(iconSize, iconColor),
     );
   }
 

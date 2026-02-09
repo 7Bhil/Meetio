@@ -2,17 +2,33 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiService {
   // Par défaut utilisez une IP locale. Vous pouvez surcharger via .env (API_BASE_URL)
   static String get baseUrl {
+    // URL de PRODUCTION par défaut
+    String url = 'https://meetio-back.onrender.com/api';
+    
     try {
-      final env = dotenv.env['API_BASE_URL'];
-      if (env != null && env.isNotEmpty) return env;
+      final envPath = dotenv.env['API_BASE_URL'];
+      if (envPath != null && envPath.isNotEmpty) {
+        url = envPath;
+      }
     } catch (_) {
-      // dotenv not initialized yet (flutter_dotenv throws NotInitializedError on web if load wasn't called)
+      // dotenv non chargé
     }
-    return 'http://localhost:8000/api';
+
+    // Fix pour l'émulateur Android (si on teste en local sur localhost/127.0.0.1)
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      if (url.contains('localhost')) {
+        url = url.replaceAll('localhost', '10.0.2.2');
+      } else if (url.contains('127.0.0.1')) {
+        url = url.replaceAll('127.0.0.1', '10.0.2.2');
+      }
+    }
+    
+    return url;
   }
 
   static String? _token;

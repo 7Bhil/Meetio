@@ -16,10 +16,8 @@ class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController =
-      TextEditingController(text: '7bhilal.chitou7@gmail.com');
-  final TextEditingController _passwordController =
-      TextEditingController(text: 'Bh7777777');
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordConfirmController =
       TextEditingController();
   bool _loading = false;
@@ -65,15 +63,16 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           
           // Back Button
-          Positioned(
-            top: 10,
-            left: 10,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: () => Navigator.pop(context),
-              color: AppColors.textSecondary,
+          if (Navigator.canPop(context))
+            Positioned(
+              top: 10,
+              left: 10,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
         ],
       ),
     );
