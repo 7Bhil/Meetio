@@ -12,6 +12,7 @@ import 'screens/admin/user_management_screen.dart';
 import 'services/auth_service.dart';
 import 'constants/app_assets.dart';
 import 'constants/colors.dart';
+import 'widgets/logo_loader.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,9 +66,10 @@ class _RootScreenState extends State<RootScreen> {
 
   Future<void> _checkAuth() async {
     // Petit délai pour montrer le logo si nécessaire
-    if (!kIsWeb) {
-      await Future.delayed(const Duration(seconds: 1));
-    }
+    // Petit délai pour montrer le logo si nécessaire
+    // if (!kIsWeb) {
+    //   await Future.delayed(const Duration(seconds: 1));
+    // }
 
     if (kIsWeb) {
       // Sur le Web, on reste sur le LandingScreen par défaut (ou on y va si route '/')
@@ -91,32 +93,9 @@ class _RootScreenState extends State<RootScreen> {
       return const LandingScreen();
     }
     // Sur Mobile, on affiche un écran de chargement brandé
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Hero(
-              tag: 'app_logo',
-              child: Image.asset(
-                AppAssets.logoPath,
-                width: 120,
-                height: 120,
-              ),
-            ),
-            const SizedBox(height: 32),
-            const SizedBox(
-              width: 40,
-              height: 40,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: LogoLoader(size: 120),
     );
   }
 }

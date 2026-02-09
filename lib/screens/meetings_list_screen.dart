@@ -11,6 +11,7 @@ import '../models/notification.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../constants/spacing.dart';
+import '../widgets/logo_loader.dart';
 
 class MeetingsListScreen extends StatefulWidget {
   const MeetingsListScreen({super.key});
@@ -22,31 +23,64 @@ class MeetingsListScreen extends StatefulWidget {
 class _MeetingsListScreenState extends State<MeetingsListScreen> {
   final MeetingService _meetingService = MeetingService();
   final NotificationService _notificationService = NotificationService();
-  late Future<List<Meeting>> _meetingsFuture;
-  late Future<List<Meeting>> _discoverMeetingsFuture;
-  late Future<List<NotificationModel>> _notificationsFuture;
+  
+  // State variables instead of Futures to allow silent refreshes
+  List<Meeting>? _meetings;
+  List<Meeting>? _discoverMeetings;
+  List<NotificationModel> _notifications = [];
   User? _currentUser;
+  
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadUserAndMeetings();
+    _loadAllData(firstLoad: true);
   }
 
-  void _loadUserAndMeetings() async {
-    _refreshMeetings();
-    final user = await AuthService().getCurrentUser();
-    setState(() {
-      _currentUser = user;
-    });
+  Future<void> _loadAllData({bool firstLoad = false}) async {
+    if (firstLoad) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
+
+    try {
+      // Load user first if needed (should be cached or quick)
+      if (_currentUser == null) {
+        _currentUser = await AuthService().getCurrentUser();
+      }
+
+      // Parallel data fetching
+      final results = await Future.wait([
+        _meetingService.getMeetings(),
+        _meetingService.getMeetings(discover: true),
+        _notificationService.getNotifications(),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _meetings = results[0] as List<Meeting>;
+          _discoverMeetings = results[1] as List<Meeting>;
+          _notifications = results[2] as List<NotificationModel>;
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  void _refreshMeetings() {
-    setState(() {
-      _meetingsFuture = _meetingService.getMeetings();
-      _discoverMeetingsFuture = _meetingService.getMeetings(discover: true);
-      _notificationsFuture = _notificationService.getNotifications();
-    });
+  Future<void> _refresh() async {
+    await _loadAllData(firstLoad: false);
   }
 
   Future<void> _logout() async {
@@ -59,6 +93,19 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: LogoLoader(message: 'Chargement de vos réunions...'),
+      );
+    }
+
+    if (_error != null && _meetings == null) {
+      return Scaffold(
+        body: _buildErrorState(_error!),
+      );
+    }
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -82,25 +129,17 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             ],
           ),
           actions: [
-            FutureBuilder<List<NotificationModel>>(
-              future: _notificationsFuture,
-              builder: (context, snapshot) {
-                final unreadCount = snapshot.hasData 
-                    ? snapshot.data!.where((n) => !n.isRead).length 
-                    : 0;
-                return IconButton(
-                  icon: Badge(
-                    label: unreadCount > 0 ? Text(unreadCount.toString()) : null,
-                    isLabelVisible: unreadCount > 0,
-                    child: const Icon(Icons.notifications_none_rounded),
-                  ),
-                  onPressed: () => Navigator.pushNamed(context, '/notifications').then((_) => _refreshMeetings()),
-                );
-              },
+            IconButton(
+              icon: Badge(
+                label: _unreadCount > 0 ? Text(_unreadCount.toString()) : null,
+                isLabelVisible: _unreadCount > 0,
+                child: const Icon(Icons.notifications_none_rounded),
+              ),
+              onPressed: () => Navigator.pushNamed(context, '/notifications').then((_) => _refresh()),
             ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
-              onPressed: _refreshMeetings,
+              onPressed: _refresh,
             ),
             const SizedBox(width: Spacing.sm),
           ],
@@ -108,12 +147,12 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
         drawer: _buildDrawer(),
         body: TabBarView(
           children: [
-            _buildMeetingsList(_meetingsFuture, isDiscover: false),
-            _buildMeetingsList(_discoverMeetingsFuture, isDiscover: true),
+            _buildMeetingsList(_meetings ?? [], isDiscover: false),
+            _buildMeetingsList(_discoverMeetings ?? [], isDiscover: true),
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => Navigator.pushNamed(context, '/meetings/create'),
+          onPressed: () => Navigator.pushNamed(context, '/meetings/create').then((_) => _refresh()),
           backgroundColor: AppColors.primary,
           icon: const Icon(Icons.add_rounded, color: Colors.white),
           label: Text('Nouvelle réunion', style: AppTextStyles.labelLarge.copyWith(color: Colors.white)),
@@ -122,40 +161,22 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
     );
   }
 
-  Widget _buildMeetingsList(Future<List<Meeting>> future, {required bool isDiscover}) {
+  int get _unreadCount => _notifications.where((n) => !n.isRead).length;
+
+  Widget _buildMeetingsList(List<Meeting> meetings, {required bool isDiscover}) {
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () async {
-        _refreshMeetings();
-        await future;
-      },
-      child: FutureBuilder<List<Meeting>>(
-        future: future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return _buildErrorState(snapshot.error.toString());
-          }
-
-          final meetings = snapshot.data ?? [];
-
-          if (meetings.isEmpty) {
-            return _buildEmptyState(isDiscover: isDiscover);
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.md),
-            itemCount: meetings.length,
-            itemBuilder: (context, index) {
-              final meeting = meetings[index];
-              return _buildMeetingCard(meeting, isDiscover: isDiscover);
-            },
-          );
-        },
-      ),
+      onRefresh: _refresh,
+      child: meetings.isEmpty
+          ? _buildEmptyState(isDiscover: isDiscover)
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.md),
+              itemCount: meetings.length,
+              itemBuilder: (context, index) {
+                final meeting = meetings[index];
+                return _buildMeetingCard(meeting, isDiscover: isDiscover);
+              },
+            ),
     );
   }
 
@@ -243,7 +264,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
         ],
       ),
       child: InkWell(
-        onTap: () => Navigator.pushNamed(context, '/meetings/detail', arguments: meeting),
+        onTap: () => Navigator.pushNamed(context, '/meetings/detail', arguments: meeting).then((_) => _refresh()),
         borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.all(Spacing.lg),
@@ -357,10 +378,8 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Inscription réussie !'), backgroundColor: AppColors.success),
         );
-        _refreshMeetings();
+        _refresh();
       } else {
-        // L'erreur de chevauchement sera gérée par l'ApiService si possible, 
-        // sinon on peut aussi récupérer le message d'erreur ici si on modifie MeetingService.
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible de rejoindre cette réunion (vérifiez vos horaires)'), backgroundColor: AppColors.error),
         );
@@ -394,27 +413,36 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
   }
 
   Widget _buildEmptyState({bool isDiscover = false}) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isDiscover ? Icons.search_off_rounded : Icons.event_note_rounded, 
-            size: 80, 
-            color: AppColors.textDisabled.withOpacity(0.5)
+    // ScrollView needed for RefreshIndicator to work on empty state
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isDiscover ? Icons.search_off_rounded : Icons.event_note_rounded, 
+                  size: 80, 
+                  color: AppColors.textDisabled.withOpacity(0.5)
+                ),
+                const SizedBox(height: Spacing.lg),
+                Text(
+                  isDiscover ? 'Aucune nouvelle réunion' : 'Aucune réunion prévue', 
+                  style: AppTextStyles.headlineSmall
+                ),
+                const SizedBox(height: Spacing.sm),
+                Text(
+                  isDiscover ? 'Revenez plus tard pour voir les nouveautés !' : 'Commencez par en créer une !', 
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: Spacing.lg),
-          Text(
-            isDiscover ? 'Aucune nouvelle réunion' : 'Aucune réunion prévue', 
-            style: AppTextStyles.headlineSmall
-          ),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            isDiscover ? 'Revenez plus tard pour voir les nouveautés !' : 'Commencez par en créer une !', 
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -431,7 +459,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             const SizedBox(height: Spacing.sm),
             Text(error, textAlign: TextAlign.center, style: AppTextStyles.bodySmall),
             const SizedBox(height: Spacing.xl),
-            ElevatedButton(onPressed: _refreshMeetings, child: const Text('Réessayer')),
+            ElevatedButton(onPressed: _refresh, child: const Text('Réessayer')),
           ],
         ),
       ),
