@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../constants/spacing.dart';
-import '../widgets/logo_widget.dart';
-import '../screens/auth_screen.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
@@ -12,13 +10,13 @@ class LandingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
             _buildHero(context),
             _buildFeatures(),
-            _buildCTA(context),
+            _buildDownloadSection(),
             _buildFooter(),
           ],
         ),
@@ -26,217 +24,279 @@ class LandingScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      debugPrint('Could not launch $url');
+    }
+  }
+
   Widget _buildHero(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 800,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.accent.withOpacity(0.8)],
-        ),
-      ),
-      child: Stack(
+      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+      color: const Color(0xFFF4F7FF),
+      child: Column(
         children: [
-          // Geometric Decor
-          Positioned(
-            top: 100,
-            right: -50,
-            child: Icon(Icons.calendar_today, size: 400, color: Colors.white.withOpacity(0.05)),
-          ),
-          
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(Spacing.xxl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      LogoWidget(type: LogoType.header),
-                      const Spacer(),
-                      _buildHeaderButton('Connexion', () {
-                         Navigator.pushNamed(context, '/auth');
-                      }),
-                    ],
+          // Logo
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.calendar_month_rounded, size: 40, color: Colors.blue),
+              const SizedBox(width: 10),
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Colors.blue, Colors.purpleAccent],
+                ).createShader(bounds),
+                child: const Text(
+                  'SessionManager',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const Spacer(),
-                  Container(
-                    constraints: const BoxConstraints(maxWidth: 800),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildBadge('Nouveau : Meetio v2 est là !'),
-                        const SizedBox(height: Spacing.lg),
-                        Text(
-                          'Simplifiez vos réunions,\nMaximisez votre temps.',
-                          style: AppTextStyles.displayLarge.copyWith(color: Colors.white),
-                        ),
-                        const SizedBox(height: Spacing.xl),
-                        Text(
-                          'La plateforme de gestion de réunions tout-en-un conçue pour les équipes modernes qui exigent l\'excellence.',
-                          style: AppTextStyles.headlineSmall.copyWith(color: Colors.white.withOpacity(0.9)),
-                        ),
-                        const SizedBox(height: Spacing.xxl),
-                        Row(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () => Navigator.pushNamed(context, '/auth'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: AppColors.primary,
-                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 25),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                elevation: 0,
-                              ),
-                              child: Text('Démarrer gratuitement', style: AppTextStyles.labelLarge.copyWith(fontSize: 18)),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(flex: 2),
-                ],
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'La plateforme complète de gestion de sessions',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 15),
+          Container(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: const Text(
+              'Créez, gérez et participez à des sessions de formation, ateliers et événements en toute simplicité. Une solution intuitive pour les organisateurs et les participants.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 40),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, '/auth'),
+            icon: const Icon(Icons.laptop_chromebook_rounded, color: Colors.white),
+            label: const Text('Accéder à la version web', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBadge(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
-      ),
-      child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _buildHeaderButton(String text, VoidCallback onPressed) {
-    return InkWell(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.white.withOpacity(0.5)),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(text, style: AppTextStyles.labelLarge.copyWith(color: Colors.white)),
       ),
     );
   }
 
   Widget _buildFeatures() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: Spacing.xxl),
+      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
       child: Column(
         children: [
-          Text('Pensé pour la productivité', style: AppTextStyles.headlineLarge),
-          const SizedBox(height: 60),
-          _buildFeatureRow(
-            icon: Icons.flash_on_rounded,
-            title: 'Planification Instantanée',
-            desc: 'Créez des réunions en moins de 30 secondes avec notre interface ultra-rapide.',
-            color: Colors.orange,
+          const Text(
+            'Fonctionnalités principales',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
           const SizedBox(height: 40),
-          _buildFeatureRow(
-            icon: Icons.shield_rounded,
-            title: 'Sécurité Maximale',
-            desc: 'Vos données sont cryptées et stockées de manière sécurisée sur nos serveurs.',
-            color: Colors.blue,
-            reverse: true,
+          Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildFeatureCard(
+                icon: Icons.people_outline_rounded,
+                iconColor: Colors.green,
+                title: 'Pour les participants',
+                features: [
+                  'Consulter les sessions disponibles',
+                  'S\'inscrire et se désinscrire facilement',
+                  'Recevoir des notifications',
+                  'Suivre ses inscriptions',
+                ],
+              ),
+              _buildFeatureCard(
+                icon: Icons.shield_outlined,
+                iconColor: Colors.blue,
+                title: 'Pour les administrateurs',
+                features: [
+                  'Créer des sessions illimitées',
+                  'Gérer les participants',
+                  'Définir dates et capacités',
+                  'Notifications en temps réel',
+                ],
+              ),
+              _buildFeatureCard(
+                icon: Icons.calendar_today_outlined,
+                iconColor: Colors.purple,
+                title: 'Gestion avancée',
+                features: [
+                  'Système de rôles complet',
+                  'Gestion des utilisateurs',
+                  'Interface intuitive',
+                  'Multi-plateforme',
+                ],
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureRow({required IconData icon, required String title, required String desc, required Color color, bool reverse = false}) {
-    final content = [
-      Expanded(
-        child: Column(
-          crossAxisAlignment: reverse ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, color: color, size: 32),
-            ),
-            const SizedBox(height: 20),
-            Text(title, style: AppTextStyles.headlineMedium),
-            const SizedBox(height: 12),
-            Text(desc, style: AppTextStyles.bodyLarge, textAlign: reverse ? TextAlign.right : TextAlign.left),
-          ],
-        ),
-      ),
-      const SizedBox(width: 80),
-      Expanded(
-        child: Container(
-          height: 200,
-          decoration: BoxDecoration(
-            color: AppColors.border,
-            borderRadius: BorderRadius.circular(20),
-            image: const DecorationImage(
-              image: NetworkImage('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80'),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-      ),
-    ];
-
-    return Row(children: reverse ? content.reversed.toList() : content);
-  }
-
-  Widget _buildCTA(BuildContext context) {
+  Widget _buildFeatureCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required List<String> features,
+  }) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 80, horizontal: Spacing.xxl),
-      padding: const EdgeInsets.all(80),
+      width: 300,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.textPrimary,
-        borderRadius: BorderRadius.circular(40),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Prêt à révolutionner vos réunions ?',
-            style: AppTextStyles.headlineLarge.copyWith(color: Colors.white),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 40),
-          ElevatedButton(
-            onPressed: () => Navigator.pushNamed(context, '/auth'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 25),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            child: Text('Commencer maintenant', style: AppTextStyles.labelLarge.copyWith(fontSize: 18)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...features.map((f) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check, size: 14, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        f,
+                        style: const TextStyle(fontSize: 13, color: Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDownloadSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+      color: const Color(0xFFF9FAFF),
+      child: Column(
+        children: [
+          const Text(
+            'Téléchargez l\'application',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Disponible sur toutes les plateformes',
+            style: TextStyle(fontSize: 14, color: Colors.black54),
+          ),
+          const SizedBox(height: 40),
+          Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildDownloadCard('iOS', 'iPhone & iPad', Icons.apple, url: 'https://testflight.apple.com/join/xxxx'),
+              _buildDownloadCard('Android', '.APK', Icons.android_rounded, color: Colors.green, url: 'https://github.com/7Bhil/Meetio/releases/latest/download/app.apk'),
+              _buildDownloadCard('Windows', '.EXE', Icons.desktop_windows_rounded, color: Colors.blue, url: 'https://github.com/7Bhil/Meetio/releases/latest/download/app.exe'),
+              _buildDownloadCard('macOS', '.DMG', Icons.apple, color: Colors.black, url: 'https://github.com/7Bhil/Meetio/releases/latest/download/app.dmg'),
+              _buildDownloadCard('Linux', '.DEB [Debian/Ubuntu]', Icons.inventory_2_outlined, color: Colors.orange, url: 'https://github.com/7Bhil/Meetio/releases/latest/download/app.deb'),
+              _buildDownloadCard('Linux', '.RPM [Fedora/RedHat]', Icons.inventory_2_outlined, color: Colors.red, url: 'https://github.com/7Bhil/Meetio/releases/latest/download/app.rpm'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDownloadCard(String title, String subtitle, IconData icon, {Color color = Colors.black, required String url}) {
+    return InkWell(
+      onTap: () => _launchURL(url),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 160,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade100),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 30, color: color),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 11, color: Colors.black54),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            const Icon(Icons.download_rounded, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildFooter() {
     return Container(
-      padding: const EdgeInsets.all(Spacing.xxxl),
-      color: Colors.white,
-      child: Column(
-        children: [
-          LogoWidget(type: LogoType.header),
-          const SizedBox(height: 40),
-          Text('© 2026 Meetio. Tous droits réservés.', style: AppTextStyles.bodySmall),
-        ],
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: const Text(
+        '© 2024 SessionManager - Tous droits réservés',
+        style: TextStyle(fontSize: 12, color: Colors.black45),
       ),
     );
   }
